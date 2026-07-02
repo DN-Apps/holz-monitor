@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${PGDATABASE}
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - holz-internal
+
+  backend:
+    build: ./holz-monitor
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: ${PGDATABASE}
+      PGUSER: ${PGUSER}
+      PGPASSWORD: ${PGPASSWORD}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    depends_on:
+      - postgres
+    networks:
+      - holz-internal
+      - proxy
+
+  dashboard:
+    build: ./dashboard
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    depends_on:
+      - backend
+    networks:
+      - proxy
+
+volumes:
+  postgres_data:
+
+networks:
+  holz-internal:
+    internal: true
+  proxy:
+    external: true
